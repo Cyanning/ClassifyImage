@@ -76,3 +76,9 @@ class Masonry(QtWidgets.QScrollArea):
                 continue
             for _path in pathes:
                 lab.source.copy_to(_path)
+
+    def deleted(self):
+        for lab in self.labs:
+            if not lab.selected:
+                continue
+            lab.source.trash()

@@ -3,7 +3,7 @@ import sys
 from PySide6 import QtWidgets
 from .widget_masonry import Masonry
 from .widget_control import ControlPanel
-from model.files import Origin
+from model.files import WorkSpace
 from model.category import Category
 
 
@@ -13,14 +13,18 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setWindowTitle("图片分类器")
 
         path = self.read_path_cache()
-        self.finder = Origin(path[0])
-        species = self.finder.current()
-        self.classify = Category(path[1], None if species is None else species.name)
+        self.finder = WorkSpace(path[0])
+        try:
+            species = self.finder.current().name
+        except AttributeError:
+            species = None
+        self.classify = Category(path[1], None, species)
         self.masonry = Masonry(self)
         self.control = ControlPanel(self, default_origin_path=path[0], default_category_path=path[1])
         self.control.signs.opponent.connect(self.refresh)
         self.control.signs.switch.connect(self.switch)
         self.control.signs.executer.connect(self.saved)
+        self.control.signs.delete.connect(self.deleted)
 
         layout = QtWidgets.QHBoxLayout()
         layout.addWidget(self.masonry)
@@ -37,14 +41,15 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.finder.path:
             if self.masonry.labs:
                 self.masonry.clear_labels()
-            self.masonry.show_labels(self.finder.current().current().children)
-            self.control.titles.text_display(self.finder.current().name, self.finder.current().current().name)
+            species = self.finder.current()
+            self.masonry.show_labels(species.current().children)
+            self.control.titles.text_display(species.name, species.current().name)
 
     def switch(self, e: int):
         # 切换物种
         if e == 0:
-            self.finder.path, self.classify.path = self.control.path_selected()
-            self.finder.build()
+            self.finder.path, self.classify.path = self.control.path_selected
+            self.finder.setup(0)
             self.classify.name = self.finder.current().name
         else:
             try:
@@ -52,7 +57,9 @@ class MainWindow(QtWidgets.QMainWindow):
                     case 1:
                         self.finder.current().index += e
                     case 2:
-                        self.finder.index += e // 2
+                        self.finder.next()
+                    case -2:
+                        self.finder.last()
                     case _:
                         raise IndexError
             except IndexError:
@@ -61,7 +68,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def saved(self):
         # 执行保存
-        target_classify = self.control.categray_selected()
+        target_classify = self.control.categray_selected
         if len(target_classify):
             try:
                 self.masonry.saved([self.classify[tc] for tc in target_classify])
@@ -70,8 +77,16 @@ class MainWindow(QtWidgets.QMainWindow):
         else:
             QtWidgets.QMessageBox.warning(self, "错误", "至少选择一个分类")
 
+    def deleted(self):
+        # 执行删除
+        try:
+            self.masonry.deleted()
+            self.refresh()
+        except PermissionError:
+            QtWidgets.QMessageBox.warning(self, "错误", "没有复制文件的权限")
+
     def closeEvent(self, event):
-        paths = self.control.path_selected()
+        paths = self.control.path_selected
         with open("cache.txt", "w", encoding="utf-8") as f:
             f.write("{}\n{}".format(*paths))
 

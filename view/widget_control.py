@@ -6,8 +6,8 @@ from model.category import Category
 class ControlSigns(QtCore.QObject):
     executer = QtCore.Signal()
     opponent = QtCore.Signal()
-    # -2 -1 0 1 2
-    switch = QtCore.Signal(int)
+    delete = QtCore.Signal()
+    switch = QtCore.Signal(int)  # -2 -1 0 1 2
 
 
 class CategoryButton(QtWidgets.QPushButton):
@@ -94,12 +94,14 @@ class ControlPanel(QtWidgets.QWidget):
 
         # 命令
         self.titles = TittleForm(self)
-
-        opponent = ControlButton("取消所有选择", self)
-        opponent.clicked.connect(self.opponent_event)
-
-        executer = ControlButton("确定-执行转移", self)
+        executer = ControlButton("确定 - 执行转移", self)
         executer.clicked.connect(self.executer_event)
+
+        delete = ControlButton("删除 - 选中的图", self)
+        delete.clicked.connect(self.delete_event)
+
+        opponent = ControlButton("取消 - 所有选择", self)
+        opponent.clicked.connect(self.opponent_event)
 
         pre_series = ControlButton("上一组图", self)
         pre_series.clicked.connect(lambda: self.switch_event(-1))
@@ -115,12 +117,13 @@ class ControlPanel(QtWidgets.QWidget):
 
         layout_command = QtWidgets.QGridLayout()
         layout_command.addWidget(self.titles, 0, 0, 1, 2)
-        layout_command.addWidget(opponent, 1, 0)
-        layout_command.addWidget(executer, 1, 1)
-        layout_command.addWidget(pre_series, 2, 0)
-        layout_command.addWidget(nxt_series, 2, 1)
-        layout_command.addWidget(pre_species, 3, 0)
-        layout_command.addWidget(nxt_species, 3, 1)
+        layout_command.addWidget(executer, 1, 0, 1, 2)
+        layout_command.addWidget(delete, 2, 0, 1, 2)
+        layout_command.addWidget(opponent, 3, 0, 1, 2)
+        layout_command.addWidget(pre_series, 4, 0)
+        layout_command.addWidget(nxt_series, 4, 1)
+        layout_command.addWidget(pre_species, 5, 0)
+        layout_command.addWidget(nxt_species, 5, 1)
 
         # 总布局
         layout = QtWidgets.QVBoxLayout()
@@ -147,6 +150,10 @@ class ControlPanel(QtWidgets.QWidget):
         self.opponent_event()
         self.signs.switch.emit(direction)
 
+    def delete_event(self):
+        # 删除图片事件
+        self.signs.delete.emit()
+
     def path_origin_select_event(self):
         # 选择源文件地址
         filePath = QtWidgets.QFileDialog.getExistingDirectory(self, "选择路径")
@@ -161,10 +168,12 @@ class ControlPanel(QtWidgets.QWidget):
             self.path_category.setText(filePath)
         self.switch_event(0)
 
+    @property
     def categray_selected(self) -> list[str]:
         # 选择的分类
         return [btn.text() for btn in self.btns if btn.selected]
 
+    @property
     def path_selected(self) -> tuple[str, str]:
         # 选择的地址
         return self.path_origin.text(), self.path_category.text()
