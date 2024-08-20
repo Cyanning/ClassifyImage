@@ -1,4 +1,4 @@
-from ._main_ import MainWindow
+from .main import MainWindow
 
 __all__ = [
     "MainWindow"

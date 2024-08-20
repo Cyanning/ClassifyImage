@@ -1,10 +1,13 @@
 import os.path
 import sys
+import json
 from PySide6 import QtWidgets
 from .widget_masonry import Masonry
 from .widget_control import ControlPanel
-from model.files import WorkSpace
+from model.imgs import WorkSpace
 from model.category import Category
+
+CACHE_PATH = "cache.json"
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -12,15 +15,22 @@ class MainWindow(QtWidgets.QMainWindow):
         super().__init__()
         self.setWindowTitle("图片分类器")
 
-        path = self.read_path_cache()
-        self.finder = WorkSpace(path[0])
+        cache = self.read_path_cache()
+        self.finder = WorkSpace(cache["origin_path"], None)
         try:
-            species = self.finder.current().name
-        except AttributeError:
-            species = None
-        self.classify = Category(path[1], None, species)
+            self.finder.build_by_name(cache["current_species"])
+            species_name = self.finder.species.name
+        except ValueError:
+            self.finder.build()
+            species_name = self.finder.species.name
+        except FileNotFoundError:
+            species_name = None
+        self.classify = Category(cache["saved_path"], None, species_name)
+
         self.masonry = Masonry(self)
-        self.control = ControlPanel(self, default_origin_path=path[0], default_category_path=path[1])
+        self.control = ControlPanel(
+            self, default_origin_path=cache["origin_path"], default_category_path=cache["saved_path"]
+        )
         self.control.signs.opponent.connect(self.refresh)
         self.control.signs.switch.connect(self.switch)
         self.control.signs.executer.connect(self.saved)
@@ -38,32 +48,24 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def refresh(self):
         # 刷新图片和选择器
-        if self.finder.path:
+        if self.finder.species is not None:
             if self.masonry.labs:
                 self.masonry.clear_labels()
-            species = self.finder.current()
-            self.masonry.show_labels(species.current().children)
-            self.control.titles.text_display(species.name, species.current().name)
+            self.masonry.show_labels(self.finder.species.imgs)
+            self.control.titles.text_display(self.finder.species.name)
 
     def switch(self, e: int):
         # 切换物种
         if e == 0:
             self.finder.path, self.classify.path = self.control.path_selected
-            self.finder.setup(0)
-            self.classify.name = self.finder.current().name
-        else:
+            self.finder.cursor = 0
+            self.classify.name = self.finder.species.name
+        elif abs(e) == 1:
             try:
-                match abs(e):
-                    case 1:
-                        self.finder.current().index += e
-                    case 2:
-                        self.finder.next()
-                    case -2:
-                        self.finder.last()
-                    case _:
-                        raise IndexError
+                self.finder.cursor += e
             except IndexError:
                 QtWidgets.QMessageBox.warning(self, "错误", "没了")
+                return
         self.refresh()
 
     def saved(self):
@@ -87,21 +89,29 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def closeEvent(self, event):
         paths = self.control.path_selected
-        with open("cache.txt", "w", encoding="utf-8") as f:
-            f.write("{}\n{}".format(*paths))
+        cache = {
+            "origin_path": paths[0],
+            "saved_path": paths[1],
+            "current_species": self.control.titles.text()
+        }
+        with open(CACHE_PATH, "w", encoding="utf-8") as f:
+            f.write(json.dumps(cache, ensure_ascii=False))
 
     @staticmethod
-    def read_path_cache() -> list[str]:
-        paths = [None, None]
-        if os.path.exists("cache.txt"):
-            with open("cache.txt", "r", encoding="utf-8") as f:
-                context = f.readlines()
-                if (lines := len(context)) > 1:
-                    paths[0] = context[0].strip()
-                    paths[1] = context[1].strip()
-                elif lines == 1:
-                    paths[0] = context[0].strip()
-        return paths
+    def read_path_cache() -> dict:
+        cache = {"origin_path": "", "saved_path": "", "current_species": ""}
+        if os.path.exists(CACHE_PATH):
+            with open(CACHE_PATH, "r", encoding="utf-8") as f:
+                try:
+                    cache_saved = json.loads(f.read())
+                except json.decoder.JSONDecodeError:
+                    cache_saved = {}
+            for key in cache:
+                try:
+                    cache[key] = cache_saved[key]
+                except KeyError:
+                    continue
+        return cache
 
     @classmethod
     def run(cls):

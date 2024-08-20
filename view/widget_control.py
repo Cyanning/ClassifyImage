@@ -48,22 +48,19 @@ class TittleForm(QtWidgets.QWidget):
     def __init__(self, parent: QtWidgets.QWidget):
         super().__init__(parent)
         lab1 = QtWidgets.QLabel("品种", self)
-        self.line1 = QtWidgets.QLineEdit(self)
-        self.line1.setReadOnly(True)
-
-        lab2 = QtWidgets.QLabel("分组", self)
-        self.line2 = QtWidgets.QLineEdit(self)
-        self.line2.setReadOnly(True)
+        self.line = QtWidgets.QLineEdit(self)
+        self.line.setReadOnly(True)
 
         layout = QtWidgets.QFormLayout()
-        layout.addRow(lab1, self.line1)
-        layout.addRow(lab2, self.line2)
+        layout.addRow(lab1, self.line)
         self.setLayout(layout)
         self.setFixedHeight(80)
 
-    def text_display(self, text1: str, text2: str):
-        self.line1.setText(text1)
-        self.line2.setText(text2)
+    def text_display(self, text: str):
+        self.line.setText(text)
+
+    def text(self):
+        return self.line.text()
 
 
 class ControlPanel(QtWidgets.QWidget):
@@ -103,27 +100,19 @@ class ControlPanel(QtWidgets.QWidget):
         opponent = ControlButton("取消 - 所有选择", self)
         opponent.clicked.connect(self.opponent_event)
 
-        pre_series = ControlButton("上一组图", self)
-        pre_series.clicked.connect(lambda: self.switch_event(-1))
-
-        nxt_series = ControlButton("下一组图", self)
-        nxt_series.clicked.connect(lambda: self.switch_event(1))
-
         pre_species = ControlButton("上一个品种", self)
-        pre_species.clicked.connect(lambda: self.switch_event(-2))
+        pre_species.clicked.connect(lambda: self.switch_event(-1))
 
         nxt_species = ControlButton("下一个品种", self)
-        nxt_species.clicked.connect(lambda: self.switch_event(2))
+        nxt_species.clicked.connect(lambda: self.switch_event(1))
 
         layout_command = QtWidgets.QGridLayout()
         layout_command.addWidget(self.titles, 0, 0, 1, 2)
         layout_command.addWidget(executer, 1, 0, 1, 2)
         layout_command.addWidget(delete, 2, 0, 1, 2)
         layout_command.addWidget(opponent, 3, 0, 1, 2)
-        layout_command.addWidget(pre_series, 4, 0)
-        layout_command.addWidget(nxt_series, 4, 1)
-        layout_command.addWidget(pre_species, 5, 0)
-        layout_command.addWidget(nxt_species, 5, 1)
+        layout_command.addWidget(pre_species, 4, 0)
+        layout_command.addWidget(nxt_species, 4, 1)
 
         # 总布局
         layout = QtWidgets.QVBoxLayout()
