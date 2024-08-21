@@ -31,8 +31,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.control = ControlPanel(
             self, default_origin_path=cache["origin_path"], default_category_path=cache["saved_path"]
         )
-        self.control.signs.opponent.connect(self.refresh)
         self.control.signs.switch.connect(self.switch)
+        self.control.signs.oppoent.connect(self.oppoent)
         self.control.signs.executer.connect(self.saved)
         self.control.signs.delete.connect(self.deleted)
 
@@ -54,19 +54,28 @@ class MainWindow(QtWidgets.QMainWindow):
             self.masonry.show_labels(self.finder.species.imgs)
             self.control.titles.text_display(self.finder.species.name)
 
+    def oppoent(self):
+        self.masonry.clear_selected()
+
     def switch(self, e: int):
         # 切换物种
         if e == 0:
-            self.finder.path, self.classify.path = self.control.path_selected
-            self.finder.cursor = 0
-            self.classify.name = self.finder.species.name
+            finder_path, classify_path = self.control.path_selected
+            if self.classify.path != classify_path:
+                self.classify.path = classify_path
+                self.oppoent()
+            if self.finder.path != finder_path:
+                self.finder.path = finder_path
+                self.finder.cursor = 0
+                self.classify.name = self.finder.species.name
+                self.refresh()
         elif abs(e) == 1:
             try:
                 self.finder.cursor += e
             except IndexError:
                 QtWidgets.QMessageBox.warning(self, "错误", "没了")
-                return
-        self.refresh()
+            else:
+                self.refresh()
 
     def saved(self):
         # 执行保存
@@ -83,6 +92,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # 执行删除
         try:
             self.masonry.deleted()
+            self.finder.build()
             self.refresh()
         except PermissionError:
             QtWidgets.QMessageBox.warning(self, "错误", "没有复制文件的权限")

@@ -5,7 +5,7 @@ from model.category import Category
 
 class ControlSigns(QtCore.QObject):
     executer = QtCore.Signal()
-    opponent = QtCore.Signal()
+    oppoent = QtCore.Signal()
     delete = QtCore.Signal()
     switch = QtCore.Signal(int)  # -2 -1 0 1 2
 
@@ -41,7 +41,7 @@ class ControlButton(QtWidgets.QPushButton):
     def __init__(self, text: str, parent: QtWidgets.QWidget):
         super().__init__(parent)
         self.setText(text)
-        self.setMinimumHeight(28)
+        self.setMinimumHeight(35)
 
 
 class TittleForm(QtWidgets.QWidget):
@@ -129,10 +129,10 @@ class ControlPanel(QtWidgets.QWidget):
         self.opponent_event()
 
     def opponent_event(self):
-        # 刷新界面事件
+        # 刷新界面选择事件
         for btn in self.btns:
             btn.set_selected(False)
-        self.signs.opponent.emit()
+        self.signs.oppoent.emit()
 
     def switch_event(self, direction: int):
         # 切换图片事件
@@ -155,7 +155,7 @@ class ControlPanel(QtWidgets.QWidget):
         filePath = QtWidgets.QFileDialog.getExistingDirectory(self, "选择路径")
         if filePath:
             self.path_category.setText(filePath)
-        self.switch_event(0)
+            self.switch_event(0)
 
     @property
     def categray_selected(self) -> list[str]:

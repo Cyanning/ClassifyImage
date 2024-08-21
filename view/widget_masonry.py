@@ -79,6 +79,10 @@ class Masonry(QtWidgets.QScrollArea):
 
     def deleted(self):
         for lab in self.labs:
-            if not lab.selected:
-                continue
-            lab.source.trash()
+            if lab.selected:
+                lab.source.trash()
+
+    def clear_selected(self):
+        for lab in self.labs:
+            if lab.selected:
+                lab.set_selected(False)
