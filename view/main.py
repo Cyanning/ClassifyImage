@@ -51,10 +51,12 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.finder.species is not None:
             if self.masonry.labs:
                 self.masonry.clear_labels()
+                self.masonry.labs.clear()
             self.masonry.show_labels(self.finder.species.imgs)
             self.control.titles.text_display(self.finder.species.name)
 
     def oppoent(self):
+        self.control.clear_selected()
         self.masonry.clear_selected()
 
     def switch(self, e: int):
@@ -83,6 +85,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if len(target_classify):
             try:
                 self.masonry.saved([self.classify[tc] for tc in target_classify])
+                self.oppoent()
             except PermissionError:
                 QtWidgets.QMessageBox.warning(self, "错误", "没有复制文件的权限")
         else:

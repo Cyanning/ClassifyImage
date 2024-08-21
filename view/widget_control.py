@@ -130,8 +130,6 @@ class ControlPanel(QtWidgets.QWidget):
 
     def opponent_event(self):
         # 刷新界面选择事件
-        for btn in self.btns:
-            btn.set_selected(False)
         self.signs.oppoent.emit()
 
     def switch_event(self, direction: int):
@@ -142,6 +140,11 @@ class ControlPanel(QtWidgets.QWidget):
     def delete_event(self):
         # 删除图片事件
         self.signs.delete.emit()
+
+    def clear_selected(self):
+        # 清楚已选项
+        for btn in self.btns:
+            btn.set_selected(False)
 
     def path_origin_select_event(self):
         # 选择源文件地址

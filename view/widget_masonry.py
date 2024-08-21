@@ -14,7 +14,6 @@ class ImgLabel(QtWidgets.QWidget):
         layout = QtWidgets.QStackedLayout()
         layout.addWidget(self.lab)
         self.setLayout(layout)
-
         self.source = source
         self.selected = False
         pic = QtGui.QPixmap(self.source.path)
@@ -58,6 +57,14 @@ class Masonry(QtWidgets.QScrollArea):
             self.labs.append(imglab)
             self.img_board.layout().addWidget(imglab, i // self.column, i % self.column)
 
+        self.img_board_resize()
+
+    def reload_labels(self):
+        for i, imglab in enumerate(self.labs):
+            self.img_board.layout().addWidget(imglab, i // self.column, i % self.column)
+        self.img_board_resize()
+
+    def img_board_resize(self):
         self.img_board.resize(
             self.column * ImgLabel.default_size.width(),
             (len(self.labs) // self.column + 1) * ImgLabel.default_size.height()
@@ -68,7 +75,6 @@ class Masonry(QtWidgets.QScrollArea):
             layout_item_widget = self.img_board.layout().itemAt(0)
             layout_item_widget.widget().deleteLater()
             self.img_board.layout().removeItem(layout_item_widget)
-        self.labs.clear()
 
     def saved(self, pathes: list[str]):
         for lab in self.labs:
@@ -78,9 +84,16 @@ class Masonry(QtWidgets.QScrollArea):
                 lab.source.copy_to(_path)
 
     def deleted(self):
-        for lab in self.labs:
-            if lab.selected:
-                lab.source.trash()
+        labs = []
+        while self.labs:
+            imglab = self.labs.pop(0)
+            if imglab.selected:
+                imglab.source.trash()
+            else:
+                labs.append(imglab)
+        self.labs = labs
+        self.clear_labels()
+        self.reload_labels()
 
     def clear_selected(self):
         for lab in self.labs:
