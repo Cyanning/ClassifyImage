@@ -25,7 +25,7 @@ class MainWindow(QtWidgets.QMainWindow):
             species_name = self.finder.species.name
         except FileNotFoundError:
             species_name = None
-        self.classify = Category(cache["saved_path"], None, species_name)
+        self.classify = Category(cache["saved_path"], None)
 
         self.masonry = Masonry(self)
         self.control = ControlPanel(
@@ -69,7 +69,6 @@ class MainWindow(QtWidgets.QMainWindow):
             if self.finder.path != finder_path:
                 self.finder.path = finder_path
                 self.finder.cursor = 0
-                self.classify.name = self.finder.species.name
                 self.refresh()
         elif abs(e) == 1:
             try:
@@ -81,10 +80,15 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def saved(self):
         # 执行保存
-        target_classify = self.control.categray_selected
-        if len(target_classify):
+        categray_selections = self.control.categray_selected
+        if len(categray_selections):
             try:
-                self.masonry.saved([self.classify[tc] for tc in target_classify])
+                self.masonry.saved(
+                    [
+                        self.classify.get_path(self.finder.species.name, category_name)
+                        for category_name in categray_selections
+                    ]
+                )
                 self.oppoent()
             except PermissionError:
                 QtWidgets.QMessageBox.warning(self, "错误", "没有复制文件的权限")
