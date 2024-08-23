@@ -19,12 +19,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.finder = WorkSpace(cache["origin_path"], None)
         try:
             self.finder.build_by_name(cache["current_species"])
-            species_name = self.finder.species.name
         except ValueError:
             self.finder.build()
-            species_name = self.finder.species.name
-        except FileNotFoundError:
-            species_name = None
         self.classify = Category(cache["saved_path"], None)
 
         self.masonry = Masonry(self)
@@ -49,15 +45,15 @@ class MainWindow(QtWidgets.QMainWindow):
     def refresh(self):
         # 刷新图片和选择器
         if self.finder.species is not None:
-            if self.masonry.labs:
-                self.masonry.clear_labels()
-                self.masonry.labs.clear()
-            self.masonry.show_labels(self.finder.species.imgs)
+            if self.masonry.img_container.labs:
+                self.masonry.img_container.clear_labels()
+                self.masonry.img_container.labs.clear()
+            self.masonry.img_container.show_labels(self.finder.species.imgs)
             self.control.titles.text_display(self.finder.species.name)
 
     def oppoent(self):
         self.control.clear_selected()
-        self.masonry.clear_selected()
+        self.masonry.img_container.clear_selected()
 
     def switch(self, e: int):
         # 切换物种
@@ -83,7 +79,7 @@ class MainWindow(QtWidgets.QMainWindow):
         categray_selections = self.control.categray_selected
         if len(categray_selections):
             try:
-                self.masonry.saved(
+                self.masonry.img_container.saved(
                     [
                         self.classify.get_path(self.finder.species.name, category_name)
                         for category_name in categray_selections
@@ -98,7 +94,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def deleted(self):
         # 执行删除
         try:
-            self.masonry.deleted()
+            self.masonry.img_container.deleted()
             self.finder.build()
             self.refresh()
         except PermissionError:

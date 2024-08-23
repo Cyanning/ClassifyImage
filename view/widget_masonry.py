@@ -25,56 +25,50 @@ class ImgLabel(QtWidgets.QWidget):
         self.lab.setPixmap(pic)
         self.setStyleSheet(f"border: 0px; padding: {self.frame_width}px;")
 
-    def set_selected(self, is_selected: bool):
-        self.selected = is_selected
+    def set_selected(self, is_selected: bool = None):
+        if is_selected is None:
+            self.selected = not self.selected
+        else:
+            self.selected = is_selected
         if self.selected:
             self.lab.setStyleSheet(f"border: {self.frame_width}px solid blue; padding: 0px;")
         else:
             self.lab.setStyleSheet(f"border: 0px; padding: {self.frame_width}px;")
 
-    def mouseReleaseEvent(self, event):
-        self.set_selected(not self.selected)
 
-
-class Masonry(QtWidgets.QScrollArea):
+class ImgContainer(QtWidgets.QWidget):
     column = 5
 
     def __init__(self, parent: QtWidgets.QWidget):
         super().__init__(parent=parent)
-        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-
-        self.img_board = QtWidgets.QWidget(self)
-        self.img_board.setContentsMargins(5, 5, 7, 5)
-        self.img_board.setLayout(QtWidgets.QGridLayout())
-        self.setWidget(self.img_board)
-
         self.labs: list[ImgLabel] = []
+        self.selecting = False
+        self.setContentsMargins(5, 5, 7, 5)
+        self.setLayout(QtWidgets.QGridLayout())
 
     def show_labels(self, imgs: list[Img]):
         for i, img in enumerate(imgs):
-            imglab = ImgLabel(self.img_board, img)
+            imglab = ImgLabel(self, img)
             self.labs.append(imglab)
-            self.img_board.layout().addWidget(imglab, i // self.column, i % self.column)
-
+            self.layout().addWidget(imglab, i // self.column, i % self.column)
         self.img_board_resize()
 
     def reload_labels(self):
         for i, imglab in enumerate(self.labs):
-            self.img_board.layout().addWidget(imglab, i // self.column, i % self.column)
+            self.layout().addWidget(imglab, i // self.column, i % self.column)
         self.img_board_resize()
 
     def img_board_resize(self):
-        self.img_board.resize(
+        self.resize(
             self.column * ImgLabel.default_size.width(),
             (len(self.labs) // self.column + 1) * ImgLabel.default_size.height()
         )
 
     def clear_labels(self):
-        while self.img_board.layout().count():
-            layout_item_widget = self.img_board.layout().itemAt(0)
+        while self.layout().count():
+            layout_item_widget = self.layout().itemAt(0)
             layout_item_widget.widget().deleteLater()
-            self.img_board.layout().removeItem(layout_item_widget)
+            self.layout().removeItem(layout_item_widget)
 
     def saved(self, pathes: list[str]):
         for lab in self.labs:
@@ -99,3 +93,30 @@ class Masonry(QtWidgets.QScrollArea):
         for lab in self.labs:
             if lab.selected:
                 lab.set_selected(False)
+
+    # def mousePressEvent(self, arg__1):
+    #     print("开启框选")
+    #     self.selecting = True
+
+    def mouseMoveEvent(self, event):
+        pos = event.position()
+        col = int(pos.x() // ImgLabel.default_size.width())
+        row = int(pos.y() // ImgLabel.default_size.height())
+        select_widget = self.layout().itemAt(row * self.column + col).widget()
+        if isinstance(select_widget, ImgLabel):
+            select_widget.set_selected(True)
+        print(col, row)
+
+    def mouseReleaseEvent(self, arg__1):
+        print("框选完毕")
+
+
+class Masonry(QtWidgets.QScrollArea):
+    column = 5
+
+    def __init__(self, parent: QtWidgets.QWidget):
+        super().__init__(parent=parent)
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.img_container = ImgContainer(self)
+        self.setWidget(self.img_container)
