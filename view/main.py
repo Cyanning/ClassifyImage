@@ -21,6 +21,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.finder.build_by_name(cache["current_species"])
         except ValueError:
             self.finder.build()
+        except FileNotFoundError:
+            pass
         self.classify = Category(cache["saved_path"], None)
 
         self.masonry = Masonry(self)

@@ -42,7 +42,7 @@ class ImgContainer(QtWidgets.QWidget):
     def __init__(self, parent: QtWidgets.QWidget):
         super().__init__(parent=parent)
         self.labs: list[ImgLabel] = []
-        self.selecting = False
+        self.focus_lab: ImgLabel | None = None
         self.setContentsMargins(5, 5, 7, 5)
         self.setLayout(QtWidgets.QGridLayout())
 
@@ -94,21 +94,34 @@ class ImgContainer(QtWidgets.QWidget):
             if lab.selected:
                 lab.set_selected(False)
 
-    # def mousePressEvent(self, arg__1):
-    #     print("开启框选")
-    #     self.selecting = True
+    def grid_of_mouse_target(self, mouse_pos: QtCore.QPointF | QtCore.QPoint):
+        col = int(mouse_pos.x() // ImgLabel.default_size.width())
+        row = int(mouse_pos.y() // ImgLabel.default_size.height())
+        select_widget = self.layout().itemAt(row * self.column + col).widget()
+        return select_widget
+
+    def mousePressEvent(self, event):
+        print("开启框选")
+        if event.button() == QtCore.Qt.MouseButton.LeftButton:
+            print("Left But")
+            lab = self.grid_of_mouse_target(event.position())
+            if isinstance(lab, ImgLabel):
+                lab.set_selected()
+                self.focus_lab = lab
 
     def mouseMoveEvent(self, event):
-        pos = event.position()
-        col = int(pos.x() // ImgLabel.default_size.width())
-        row = int(pos.y() // ImgLabel.default_size.height())
-        select_widget = self.layout().itemAt(row * self.column + col).widget()
-        if isinstance(select_widget, ImgLabel):
-            select_widget.set_selected(True)
-        print(col, row)
+        if self.focus_lab is None:
+            return
+        lab = self.grid_of_mouse_target(event.position())
+        if self.focus_lab is not lab and isinstance(lab, ImgLabel):
+            lab.set_selected()
+            self.focus_lab = lab
 
-    def mouseReleaseEvent(self, arg__1):
+    def mouseReleaseEvent(self, event):
         print("框选完毕")
+        if event.button() == QtCore.Qt.MouseButton.LeftButton:
+            print("Left But")
+            self.focus_lab = None
 
 
 class Masonry(QtWidgets.QScrollArea):
