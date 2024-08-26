@@ -21,8 +21,7 @@ class MainWindow(QtWidgets.QMainWindow):
             self.finder.build_by_name(cache["current_species"])
         except ValueError:
             self.finder.build()
-        except FileNotFoundError:
-            pass
+
         self.classify = Category(cache["saved_path"], None)
 
         self.masonry = Masonry(self)
@@ -47,13 +46,11 @@ class MainWindow(QtWidgets.QMainWindow):
     def refresh(self):
         # 刷新图片和选择器
         if self.finder.species is not None:
-            if self.masonry.img_container.labs:
-                self.masonry.img_container.clear_labels()
-                self.masonry.img_container.labs.clear()
             self.masonry.img_container.show_labels(self.finder.species.imgs)
             self.control.titles.text_display(self.finder.species.name)
 
     def oppoent(self):
+        # 清除界面中选择项
         self.control.clear_selected()
         self.masonry.img_container.clear_selected()
 
@@ -98,7 +95,6 @@ class MainWindow(QtWidgets.QMainWindow):
         try:
             self.masonry.img_container.deleted()
             self.finder.build()
-            self.refresh()
         except PermissionError:
             QtWidgets.QMessageBox.warning(self, "错误", "没有复制文件的权限")
 
@@ -122,10 +118,8 @@ class MainWindow(QtWidgets.QMainWindow):
                 except json.decoder.JSONDecodeError:
                     cache_saved = {}
             for key in cache:
-                try:
+                if key in cache_saved and os.path.exists(cache_saved[key]):
                     cache[key] = cache_saved[key]
-                except KeyError:
-                    continue
         return cache
 
     @classmethod

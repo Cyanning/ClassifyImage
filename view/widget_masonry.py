@@ -4,25 +4,22 @@ from PySide6 import QtGui
 from model.imgs import Img
 
 
-class ImgLabel(QtWidgets.QWidget):
-    default_size = QtCore.QSize(320, 320)
+class ImgLabel(QtWidgets.QLabel):
     frame_width = 5
+    default_size = QtCore.QSize(350, 350)
 
     def __init__(self, parent: QtWidgets.QWidget, source: Img):
         super().__init__(parent)
-        self.lab = QtWidgets.QLabel(self)
-        layout = QtWidgets.QStackedLayout()
-        layout.addWidget(self.lab)
-        self.setLayout(layout)
-        self.source = source
+        self.source: Img = source
         self.selected = False
-        pic = QtGui.QPixmap(self.source.path)
-        pic = pic.scaled(
+        pixmap = QtGui.QPixmap(self.source.path)
+        pixmap = pixmap.scaled(
             self.default_size,
             QtCore.Qt.AspectRatioMode.KeepAspectRatio,
             QtCore.Qt.TransformationMode.SmoothTransformation
         )
-        self.lab.setPixmap(pic)
+        self.setPixmap(pixmap)
+        self.resize(self.default_size)
         self.setStyleSheet(f"border: 0px; padding: {self.frame_width}px;")
 
     def set_selected(self, is_selected: bool = None):
@@ -31,9 +28,9 @@ class ImgLabel(QtWidgets.QWidget):
         else:
             self.selected = is_selected
         if self.selected:
-            self.lab.setStyleSheet(f"border: {self.frame_width}px solid blue; padding: 0px;")
+            self.setStyleSheet(f"border: {self.frame_width}px solid blue; padding: 0px;")
         else:
-            self.lab.setStyleSheet(f"border: 0px; padding: {self.frame_width}px;")
+            self.setStyleSheet(f"border: 0px; padding: {self.frame_width}px;")
 
 
 class ImgContainer(QtWidgets.QWidget):
@@ -42,11 +39,18 @@ class ImgContainer(QtWidgets.QWidget):
     def __init__(self, parent: QtWidgets.QWidget):
         super().__init__(parent=parent)
         self.labs: list[ImgLabel] = []
-        self.focus_lab: ImgLabel | None = None
-        self.setContentsMargins(5, 5, 7, 5)
-        self.setLayout(QtWidgets.QGridLayout())
+        self.__focus_lab: ImgLabel | None = None
+        layout = QtWidgets.QGridLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
 
     def show_labels(self, imgs: list[Img]):
+        while self.layout().count():
+            layout_item_widget = self.layout().itemAt(0)
+            layout_item_widget.widget().deleteLater()
+            self.layout().removeItem(layout_item_widget)
+        self.labs.clear()
+
         for i, img in enumerate(imgs):
             imglab = ImgLabel(self, img)
             self.labs.append(imglab)
@@ -54,21 +58,20 @@ class ImgContainer(QtWidgets.QWidget):
         self.img_board_resize()
 
     def reload_labels(self):
+        while self.layout().count():
+            layout_item_widget = self.layout().itemAt(0)
+            self.layout().removeItem(layout_item_widget)
+
         for i, imglab in enumerate(self.labs):
             self.layout().addWidget(imglab, i // self.column, i % self.column)
         self.img_board_resize()
 
     def img_board_resize(self):
-        self.resize(
-            self.column * ImgLabel.default_size.width(),
-            (len(self.labs) // self.column + 1) * ImgLabel.default_size.height()
-        )
-
-    def clear_labels(self):
-        while self.layout().count():
-            layout_item_widget = self.layout().itemAt(0)
-            layout_item_widget.widget().deleteLater()
-            self.layout().removeItem(layout_item_widget)
+        widget_count = len(self.labs)
+        colum = min(widget_count, self.column)
+        quotient, remainder = divmod(widget_count, self.column)
+        row = quotient + (1 if remainder else 0)
+        self.resize(colum * ImgLabel.default_size.width(), row * ImgLabel.default_size.height())
 
     def saved(self, pathes: list[str]):
         for lab in self.labs:
@@ -80,13 +83,14 @@ class ImgContainer(QtWidgets.QWidget):
     def deleted(self):
         labs = []
         while self.labs:
-            imglab = self.labs.pop(0)
+            imglab = self.labs.pop()
             if imglab.selected:
                 imglab.source.trash()
+                imglab.deleteLater()
             else:
                 labs.append(imglab)
+        labs.reverse()
         self.labs = labs
-        self.clear_labels()
         self.reload_labels()
 
     def clear_selected(self):
@@ -101,27 +105,23 @@ class ImgContainer(QtWidgets.QWidget):
         return select_widget
 
     def mousePressEvent(self, event):
-        print("开启框选")
         if event.button() == QtCore.Qt.MouseButton.LeftButton:
-            print("Left But")
             lab = self.grid_of_mouse_target(event.position())
             if isinstance(lab, ImgLabel):
                 lab.set_selected()
-                self.focus_lab = lab
+                self.__focus_lab = lab
 
     def mouseMoveEvent(self, event):
-        if self.focus_lab is None:
+        if self.__focus_lab is None:
             return
         lab = self.grid_of_mouse_target(event.position())
-        if self.focus_lab is not lab and isinstance(lab, ImgLabel):
+        if self.__focus_lab is not lab and isinstance(lab, ImgLabel):
             lab.set_selected()
-            self.focus_lab = lab
+            self.__focus_lab = lab
 
     def mouseReleaseEvent(self, event):
-        print("框选完毕")
         if event.button() == QtCore.Qt.MouseButton.LeftButton:
-            print("Left But")
-            self.focus_lab = None
+            self.__focus_lab = None
 
 
 class Masonry(QtWidgets.QScrollArea):
@@ -130,6 +130,7 @@ class Masonry(QtWidgets.QScrollArea):
     def __init__(self, parent: QtWidgets.QWidget):
         super().__init__(parent=parent)
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.img_container = ImgContainer(self)
         self.setWidget(self.img_container)
+        self.setContentsMargins(0, 0, 0, 0)
