@@ -6,7 +6,7 @@ from model.imgs import Img
 
 class ImgLabel(QtWidgets.QLabel):
     frame_width = 5
-    default_size = QtCore.QSize(350, 350)
+    default_size = QtCore.QSize(320, 320)
 
     def __init__(self, parent: QtWidgets.QWidget, source: Img):
         super().__init__(parent)
@@ -41,7 +41,6 @@ class ImgContainer(QtWidgets.QWidget):
         self.labs: list[ImgLabel] = []
         self.__focus_lab: ImgLabel | None = None
         layout = QtWidgets.QGridLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
 
     def show_labels(self, imgs: list[Img]):
@@ -133,4 +132,3 @@ class Masonry(QtWidgets.QScrollArea):
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.img_container = ImgContainer(self)
         self.setWidget(self.img_container)
-        self.setContentsMargins(0, 0, 0, 0)

@@ -26,7 +26,8 @@ class CategoryButton(QtWidgets.QPushButton):
             self.setStyleSheet("background-color: none; color: #000000;")
 
     def mouseReleaseEvent(self, e):
-        self.set_selected(not self.selected)
+        if e.button() == QtCore.Qt.MouseButton.LeftButton:
+            self.set_selected(not self.selected)
 
 
 class AddressEdit(QtWidgets.QLineEdit):
