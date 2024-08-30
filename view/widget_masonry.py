@@ -6,21 +6,24 @@ from model.imgs import Img
 
 class ImgLabel(QtWidgets.QLabel):
     frame_width = 5
-    default_size = QtCore.QSize(320, 320)
 
-    def __init__(self, parent: QtWidgets.QWidget, source: Img):
+    def __init__(self, parent: QtWidgets.QWidget, init_size: QtCore.QSize, source: Img):
         super().__init__(parent)
         self.source: Img = source
         self.selected = False
+        self.showed = False
+        self.setStyleSheet(f"border: 0px; padding: {self.frame_width}px;")
+        self.resize(init_size)
+
+    def load_img(self):
         pixmap = QtGui.QPixmap(self.source.path)
         pixmap = pixmap.scaled(
-            self.default_size,
+            self.size(),
             QtCore.Qt.AspectRatioMode.KeepAspectRatio,
             QtCore.Qt.TransformationMode.SmoothTransformation
         )
         self.setPixmap(pixmap)
-        self.resize(self.default_size)
-        self.setStyleSheet(f"border: 0px; padding: {self.frame_width}px;")
+        self.showed = True
 
     def set_selected(self, is_selected: bool = None):
         if is_selected is None:
@@ -35,6 +38,7 @@ class ImgLabel(QtWidgets.QLabel):
 
 class ImgContainer(QtWidgets.QWidget):
     column = 5
+    img_size = QtCore.QSize(320, 320)
 
     def __init__(self, parent: QtWidgets.QWidget):
         super().__init__(parent=parent)
@@ -51,10 +55,11 @@ class ImgContainer(QtWidgets.QWidget):
         self.labs.clear()
 
         for i, img in enumerate(imgs):
-            imglab = ImgLabel(self, img)
+            imglab = ImgLabel(self, self.img_size, img)
             self.labs.append(imglab)
             self.layout().addWidget(imglab, i // self.column, i % self.column)
         self.__img_board_resize()
+        self.loads(0)
 
     def reload_labels(self):
         while self.layout().count():
@@ -70,7 +75,7 @@ class ImgContainer(QtWidgets.QWidget):
         colum = min(widget_count, self.column)
         quotient, remainder = divmod(widget_count, self.column)
         row = quotient + (1 if remainder else 0)
-        self.resize(colum * ImgLabel.default_size.width(), row * ImgLabel.default_size.height())
+        self.resize(colum * self.img_size.width(), row * self.img_size.height())
 
     def saved(self, pathes: list[str]):
         for lab in self.labs:
@@ -98,10 +103,25 @@ class ImgContainer(QtWidgets.QWidget):
                 lab.set_selected(False)
 
     def grid_of_mouse_target(self, mouse_pos: QtCore.QPointF | QtCore.QPoint):
-        col = int(mouse_pos.x() // ImgLabel.default_size.width())
-        row = int(mouse_pos.y() // ImgLabel.default_size.height())
-        select_widget = self.layout().itemAt(row * self.column + col).widget()
-        return select_widget
+        col = int(mouse_pos.x() // self.img_size.width())
+        row = int(mouse_pos.y() // self.img_size.height())
+        item = self.layout().itemAt(row * self.column + col)
+        if item is not None:
+            return item.widget()
+
+    def loads(self, height: int):
+        """
+        当前的位置除以图片控件高度取整，得到当前界面显示的行的序数；
+        每次加载四行的图片；
+        """
+        idx_base = height // self.img_size.height() * self.column
+        for i in range(self.column * 4):
+            item = self.layout().itemAt(idx_base + i)
+            if item is None:
+                continue
+            widget = item.widget()
+            if isinstance(widget, ImgLabel) and not widget.showed:
+                widget.load_img()
 
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.MouseButton.LeftButton:
@@ -132,3 +152,8 @@ class Masonry(QtWidgets.QScrollArea):
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.img_container = ImgContainer(self)
         self.setWidget(self.img_container)
+        self.verticalScrollBar().valueChanged.connect(self.img_container.loads)
+
+    def reset(self):
+        self.verticalScrollBar().setValue(0)
+        self.horizontalScrollBar().setValue(0)

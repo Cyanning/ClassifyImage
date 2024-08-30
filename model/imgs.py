@@ -3,6 +3,8 @@ import shutil
 
 from ._base_ import Path
 
+IMG_FORMATS = (".jpg", ".jpeg", ".JPG", ".JPEG", ".png", ".PNG")
+
 
 class Img(Path):
     def __init__(self, _path: str | None, _name: str | None):
@@ -29,10 +31,10 @@ class Species(Path):
 
     def build(self):
         self.imgs.clear()
-        self.imgs = [
-            Img(fn_img.path, fn_img.name)
-            for fn in os.scandir(self.path) for fn_img in os.scandir(fn.path)
-        ]
+        for dirpath, dirnames, filenames in os.walk(self.path):
+            for filename in filenames:
+                if any(filename.endswith(endcode) for endcode in IMG_FORMATS):
+                    self.imgs.append(Img(f"{dirpath}/{filename}", filename))
 
 
 class WorkSpace(Path):
@@ -48,25 +50,28 @@ class WorkSpace(Path):
 
     @cursor.setter
     def cursor(self, _idx: int):
-        for i, fn in enumerate(os.scandir(self.path)):
-            if i == _idx:
-                self.__idx = i
-                self.species = Species(fn.path, fn.name)
-                break
-        else:
-            raise IndexError
+        with os.scandir(self.path) as files:
+            for i, fn in enumerate(files):
+                if i == _idx:
+                    self.__idx = i
+                    self.species = Species(fn.path, fn.name)
+                    break
+            else:
+                raise IndexError
 
     def build_by_name(self, item: str):
-        for i, fn in enumerate(os.scandir(self.path)):
-            if fn.name == item:
-                self.__idx = i
-                self.species = Species(fn.path, fn.name)
-                break
-        else:
-            raise ValueError
+        with os.scandir(self.path) as files:
+            for i, fn in enumerate(files):
+                if fn.name == item:
+                    self.__idx = i
+                    self.species = Species(fn.path, fn.name)
+                    break
+            else:
+                raise ValueError
 
     def build(self):
-        for i, fn in enumerate(os.scandir(self.path)):
-            if self.__idx == i:
-                self.species = Species(fn.path, fn.name)
-                break
+        with os.scandir(self.path) as files:
+            for i, fn in enumerate(files):
+                if self.__idx == i:
+                    self.species = Species(fn.path, fn.name)
+                    break

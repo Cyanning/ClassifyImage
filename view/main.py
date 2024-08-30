@@ -48,6 +48,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def refresh(self):
         # 刷新图片和选择器
         if self.finder.species is not None:
+            self.masonry.reset()
             self.masonry.img_container.show_labels(self.finder.species.imgs)
             self.control.titles.text_display(self.finder.species.name)
 
@@ -120,7 +121,7 @@ class MainWindow(QtWidgets.QMainWindow):
                 except json.decoder.JSONDecodeError:
                     cache_saved = {}
             for key in cache:
-                if key in cache_saved and os.path.exists(cache_saved[key]):
+                if key in cache_saved:
                     cache[key] = cache_saved[key]
         return cache
 
