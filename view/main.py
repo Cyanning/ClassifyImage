@@ -19,6 +19,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.finder = WorkSpace(cache["origin_path"], None)
         try:
             self.finder.build_by_name(cache["current_species"])
+        except FileNotFoundError:
+            self.finder.path = None
         except ValueError:
             self.finder.build()
 

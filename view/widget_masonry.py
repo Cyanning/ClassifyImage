@@ -54,7 +54,7 @@ class ImgContainer(QtWidgets.QWidget):
             imglab = ImgLabel(self, img)
             self.labs.append(imglab)
             self.layout().addWidget(imglab, i // self.column, i % self.column)
-        self.img_board_resize()
+        self.__img_board_resize()
 
     def reload_labels(self):
         while self.layout().count():
@@ -63,9 +63,9 @@ class ImgContainer(QtWidgets.QWidget):
 
         for i, imglab in enumerate(self.labs):
             self.layout().addWidget(imglab, i // self.column, i % self.column)
-        self.img_board_resize()
+        self.__img_board_resize()
 
-    def img_board_resize(self):
+    def __img_board_resize(self):
         widget_count = len(self.labs)
         colum = min(widget_count, self.column)
         quotient, remainder = divmod(widget_count, self.column)
