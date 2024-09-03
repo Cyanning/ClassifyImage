@@ -11,9 +11,9 @@ class ImgLabel(QtWidgets.QLabel):
         super().__init__(parent)
         self.source: Img = source
         self.selected = False
-        self.showed = False
         self.setStyleSheet(f"border: 0px; padding: {self.frame_width}px;")
         self.resize(init_size)
+        self.load_img()
 
     def load_img(self):
         pixmap = QtGui.QPixmap(self.source.path)
@@ -23,7 +23,6 @@ class ImgLabel(QtWidgets.QLabel):
             QtCore.Qt.TransformationMode.SmoothTransformation
         )
         self.setPixmap(pixmap)
-        self.showed = True
 
     def set_selected(self, is_selected: bool = None):
         if is_selected is None:
@@ -59,7 +58,6 @@ class ImgContainer(QtWidgets.QWidget):
             self.labs.append(imglab)
             self.layout().addWidget(imglab, i // self.column, i % self.column)
         self.__img_board_resize()
-        self.loads(0)
 
     def reload_labels(self):
         while self.layout().count():
@@ -120,7 +118,7 @@ class ImgContainer(QtWidgets.QWidget):
             if item is None:
                 continue
             widget = item.widget()
-            if isinstance(widget, ImgLabel) and not widget.showed:
+            if isinstance(widget, ImgLabel) and widget.pixmap() is not None:
                 widget.load_img()
 
     def mousePressEvent(self, event):
@@ -152,7 +150,6 @@ class Masonry(QtWidgets.QScrollArea):
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.img_container = ImgContainer(self)
         self.setWidget(self.img_container)
-        self.verticalScrollBar().valueChanged.connect(self.img_container.loads)
 
     def reset(self):
         self.verticalScrollBar().setValue(0)
