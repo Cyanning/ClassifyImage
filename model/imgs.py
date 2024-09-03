@@ -24,9 +24,13 @@ class Img(Path):
 
 
 class Species(Path):
-    def __init__(self, _path: str | None, _name: str | None):
+    def __init__(self, _path: str, _name: str, magnitude: int):
         super().__init__(_path, _name)
         self.imgs: list[Img] = []
+        if magnitude > 0:
+            assert self.count() > magnitude
+        elif magnitude < 0:
+            assert self.count() < abs(magnitude)
         self.build()
 
     def build(self):
@@ -36,13 +40,22 @@ class Species(Path):
                 if any(filename.endswith(endcode) for endcode in IMG_FORMATS):
                     self.imgs.append(Img(f"{dirpath}/{filename}", filename))
 
+    def count(self):
+        count = 0
+        for dirpath, dirnames, filenames in os.walk(self.path):
+            for filename in filenames:
+                if any(filename.endswith(endcode) for endcode in IMG_FORMATS):
+                    count += 1
+        return count
+
 
 class WorkSpace(Path):
-    def __init__(self, _path: str | None, _name: str | None):
+    def __init__(self, _path: str | None, _name: str | None, _magnitude=0):
         super().__init__(_path, None)
         self.__idx: int = -1 if _path is None else 0
         self.name: str = _name
         self.species: Species | None = None
+        self.magnitude = _magnitude
 
     @property
     def cursor(self):
@@ -54,7 +67,7 @@ class WorkSpace(Path):
             for i, fn in enumerate(files):
                 if i == _idx:
                     self.__idx = i
-                    self.species = Species(fn.path, fn.name)
+                    self.species = Species(fn.path, fn.name, self.magnitude)
                     break
             else:
                 raise IndexError
@@ -64,7 +77,7 @@ class WorkSpace(Path):
             for i, fn in enumerate(files):
                 if fn.name == item:
                     self.__idx = i
-                    self.species = Species(fn.path, fn.name)
+                    self.species = Species(fn.path, fn.name, self.magnitude)
                     break
             else:
                 raise ValueError
@@ -73,5 +86,5 @@ class WorkSpace(Path):
         with os.scandir(self.path) as files:
             for i, fn in enumerate(files):
                 if self.__idx == i:
-                    self.species = Species(fn.path, fn.name)
+                    self.species = Species(fn.path, fn.name, self.magnitude)
                     break
