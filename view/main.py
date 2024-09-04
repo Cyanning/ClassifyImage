@@ -16,13 +16,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setWindowTitle("图片分类器")
 
         cache = self.read_path_cache()
-        self.finder = WorkSpace(cache["origin_path"], None)
+        self.finder = WorkSpace(cache["origin_path"], None, cache["magnitude"])
         try:
-            self.finder.build_by_name(cache["current_species"])
+            self.finder.init_build(cache["current_species"])
         except FileNotFoundError:
             self.finder.path = None
-        except ValueError:
-            self.finder.build()
 
         self.classify = Category(cache["saved_path"], None)
 
@@ -66,15 +64,20 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.oppoent()
             if self.finder.path != finder_path:
                 self.finder.path = finder_path
-                self.finder.cursor = 0
+                self.finder.init_build(0)
                 self.refresh()
         elif abs(e) == 1:
-            try:
-                self.finder.cursor += e
-            except IndexError:
-                QtWidgets.QMessageBox.warning(self, "错误", "没了")
-            else:
-                self.refresh()
+            while True:
+                try:
+                    self.finder.cursor += e
+                except IndexError:
+                    QtWidgets.QMessageBox.warning(self, "错误", "没了")
+                    break
+                except AssertionError:
+                    continue
+                else:
+                    self.refresh()
+                    break
 
     def saved(self):
         # 执行保存
@@ -106,14 +109,15 @@ class MainWindow(QtWidgets.QMainWindow):
         cache = {
             "origin_path": paths[0],
             "saved_path": paths[1],
-            "current_species": self.control.titles.text()
+            "current_species": self.control.titles.text(),
+            "magnitude": self.finder.magnitude
         }
         with open(CACHE_PATH, "w", encoding="utf-8") as f:
             f.write(json.dumps(cache, ensure_ascii=False))
 
     @staticmethod
     def read_path_cache() -> dict:
-        cache = {"origin_path": "", "saved_path": "", "current_species": ""}
+        cache = {"origin_path": "", "saved_path": "", "current_species": "", "magnitude": 0}
         if os.path.exists(CACHE_PATH):
             with open(CACHE_PATH, "r", encoding="utf-8") as f:
                 try:

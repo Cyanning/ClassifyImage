@@ -27,9 +27,9 @@ class Species(Path):
     def __init__(self, _path: str, _name: str, magnitude: int):
         super().__init__(_path, _name)
         self.imgs: list[Img] = []
-        if magnitude > 0:
+        if magnitude >= 0:
             assert self.count() > magnitude
-        elif magnitude < 0:
+        else:
             assert self.count() < abs(magnitude)
         self.build()
 
@@ -50,7 +50,7 @@ class Species(Path):
 
 
 class WorkSpace(Path):
-    def __init__(self, _path: str | None, _name: str | None, _magnitude=0):
+    def __init__(self, _path: str | None, _name: str | None, _magnitude: int):
         super().__init__(_path, None)
         self.__idx: int = -1 if _path is None else 0
         self.name: str = _name
@@ -88,3 +88,28 @@ class WorkSpace(Path):
                 if self.__idx == i:
                     self.species = Species(fn.path, fn.name, self.magnitude)
                     break
+
+    def init_build(self, item: str | int):
+        if isinstance(item, str):
+            try:
+                self.build_by_name(item)
+                return
+            except (ValueError, AssertionError):
+                item = 0
+
+        if isinstance(item, int):
+            try:
+                self.cursor = item
+                return
+            except (ValueError, AssertionError, IndexError):
+                self.__idx = -1
+
+        while True:
+            try:
+                self.cursor += 1
+            except AssertionError:
+                continue
+            except IndexError:
+                break
+            else:
+                break
