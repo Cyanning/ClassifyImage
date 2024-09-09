@@ -70,11 +70,13 @@ class MainWindow(QtWidgets.QMainWindow):
             while True:
                 try:
                     self.finder.cursor += e
+                except AssertionError:
+                    continue
                 except IndexError:
                     QtWidgets.QMessageBox.warning(self, "错误", "没了")
                     break
-                except AssertionError:
-                    continue
+                except FileNotFoundError:
+                    QtWidgets.QMessageBox.warning(self, "错误", "地址错误，请重新指定地址")
                 else:
                     self.refresh()
                     break
