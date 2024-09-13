@@ -16,13 +16,13 @@ class MainWindow(QtWidgets.QMainWindow):
         self.setWindowTitle("图片分类器")
 
         cache = self.read_path_cache()
-        self.finder = WorkSpace(cache["origin_path"], None, cache["magnitude"])
+        self.finder = WorkSpace(cache["origin_path"], cache["magnitude"])
         try:
             self.finder.init_build(cache["current_species"])
         except FileNotFoundError:
             self.finder.path = None
 
-        self.classify = Category(cache["saved_path"], None)
+        self.classify = Category(cache["saved_path"])
 
         self.masonry = Masonry(self)
         self.control = ControlPanel(
@@ -48,7 +48,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if self.finder.species is not None:
             self.masonry.reset()
             self.masonry.img_container.show_labels(self.finder.species.imgs)
-            self.control.titles.text_display(self.finder.species.name)
+            self.control.titles.text_display(self.finder.species.path.name)
 
     def oppoent(self):
         # 清除界面中选择项
@@ -88,7 +88,7 @@ class MainWindow(QtWidgets.QMainWindow):
             try:
                 self.masonry.img_container.saved(
                     [
-                        self.classify.get_path(self.finder.species.name, category_name)
+                        self.classify.get_path(self.finder.species.path.name, category_name)
                         for category_name in categray_selections
                     ]
                 )

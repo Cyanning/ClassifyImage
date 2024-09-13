@@ -16,7 +16,7 @@ class ImgLabel(QtWidgets.QLabel):
         self.load_img()
 
     def load_img(self):
-        pixmap = QtGui.QPixmap(self.source.path)
+        pixmap = QtGui.QPixmap(self.source.path.total)
         pixmap = pixmap.scaled(
             self.size(),
             QtCore.Qt.AspectRatioMode.KeepAspectRatio,

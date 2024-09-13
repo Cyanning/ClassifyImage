@@ -6,26 +6,23 @@ from ._base_ import Path
 IMG_FORMATS = (".jpg", ".jpeg", ".JPG", ".JPEG", ".png", ".PNG")
 
 
-class Img(Path):
-    def __init__(self, _path: str | None, _name: str | None):
-        super().__init__(_path, _name)
+class Img:
+    def __init__(self, _path: str | None):
+        self.path = Path(_path)
 
     def copy_to(self, _path: str):
-        shutil.copyfile(self.path, f"{_path}/{self.name}")
+        shutil.copyfile(self.path.total, f"{_path}/{self.path.name}")
 
     def trash(self):
-        idx_1st = self.path.find("/")
-        idx_2ed = self.path.find("/", idx_1st + 1)
-        idx_final = self.path.rfind("/")
-        filepath = self.path[:idx_1st] + "/trash" + self.path[idx_2ed:idx_final]
+        filepath = self.path[0] + "/trash" + self.path[2:]
         if not os.path.exists(filepath):
             os.makedirs(filepath)
-        shutil.move(self.path, filepath + "/" + self.name)
+        shutil.move(self.path.total, filepath + "/" + self.path.name)
 
 
-class Species(Path):
-    def __init__(self, _path: str, _name: str, magnitude: int):
-        super().__init__(_path, _name)
+class Species:
+    def __init__(self, _path: str, magnitude: int):
+        self.path = Path(_path)
         self.imgs: list[Img] = []
         if magnitude >= 0:
             assert self.count() > magnitude
@@ -35,25 +32,24 @@ class Species(Path):
 
     def build(self):
         self.imgs.clear()
-        for dirpath, dirnames, filenames in os.walk(self.path):
+        for dirpath, dirnames, filenames in os.walk(self.path.total):
             for filename in filenames:
                 if any(filename.endswith(endcode) for endcode in IMG_FORMATS):
-                    self.imgs.append(Img(f"{dirpath}/{filename}", filename))
+                    self.imgs.append(Img(f"{dirpath}/{filename}"))
 
     def count(self):
         count = 0
-        for dirpath, dirnames, filenames in os.walk(self.path):
+        for dirpath, dirnames, filenames in os.walk(self.path.total):
             for filename in filenames:
                 if any(filename.endswith(endcode) for endcode in IMG_FORMATS):
                     count += 1
         return count
 
 
-class WorkSpace(Path):
-    def __init__(self, _path: str | None, _name: str | None, _magnitude: int):
-        super().__init__(_path, None)
+class WorkSpace:
+    def __init__(self, _path: str | None, _magnitude: int):
         self.__idx: int = -1 if _path is None else 0
-        self.name: str = _name
+        self.path = Path(_path)
         self.species: Species | None = None
         self.magnitude = _magnitude
 
@@ -63,30 +59,30 @@ class WorkSpace(Path):
 
     @cursor.setter
     def cursor(self, _idx: int):
-        with os.scandir(self.path) as files:
+        with os.scandir(self.path.total) as files:
             for i, fn in enumerate(files):
                 if i == _idx:
                     self.__idx = i
-                    self.species = Species(fn.path, fn.name, self.magnitude)
+                    self.species = Species(fn.path, self.magnitude)
                     break
             else:
                 raise IndexError
 
     def build_by_name(self, item: str):
-        with os.scandir(self.path) as files:
+        with os.scandir(self.path.total) as files:
             for i, fn in enumerate(files):
                 if fn.name == item:
                     self.__idx = i
-                    self.species = Species(fn.path, fn.name, self.magnitude)
+                    self.species = Species(fn.path, self.magnitude)
                     break
             else:
                 raise ValueError
 
     def build(self):
-        with os.scandir(self.path) as files:
+        with os.scandir(self.path.total) as files:
             for i, fn in enumerate(files):
                 if self.__idx == i:
-                    self.species = Species(fn.path, fn.name, self.magnitude)
+                    self.species = Species(fn.path, self.magnitude)
                     break
 
     def init_build(self, item: str | int):
@@ -96,7 +92,6 @@ class WorkSpace(Path):
                 return
             except (ValueError, AssertionError):
                 item = 0
-
         if isinstance(item, int):
             try:
                 self.cursor = item
