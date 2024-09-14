@@ -20,7 +20,7 @@ class MainWindow(QtWidgets.QMainWindow):
         try:
             self.finder.init_build(cache["current_species"])
         except FileNotFoundError:
-            self.finder.path = None
+            self.finder.path.total = None
 
         self.classify = Category(cache["saved_path"])
 
@@ -60,10 +60,10 @@ class MainWindow(QtWidgets.QMainWindow):
         if e == 0:
             finder_path, classify_path = self.control.path_selected
             if self.classify.path != classify_path:
-                self.classify.path = classify_path
+                self.classify.path.set_path(classify_path)
                 self.oppoent()
             if self.finder.path != finder_path:
-                self.finder.path = finder_path
+                self.finder.path.set_path(finder_path)
                 self.finder.init_build(0)
                 self.refresh()
         elif abs(e) == 1:

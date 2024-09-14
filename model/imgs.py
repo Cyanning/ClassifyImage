@@ -8,7 +8,8 @@ IMG_FORMATS = (".jpg", ".jpeg", ".JPG", ".JPEG", ".png", ".PNG")
 
 class Img:
     def __init__(self, _path: str | None):
-        self.path = Path(_path)
+        self.path = Path()
+        self.path.set_path(_path)
 
     def copy_to(self, _path: str):
         shutil.copyfile(self.path.total, f"{_path}/{self.path.name}")
@@ -22,7 +23,8 @@ class Img:
 
 class Species:
     def __init__(self, _path: str, magnitude: int):
-        self.path = Path(_path)
+        self.path = Path()
+        self.path.set_path(_path)
         self.imgs: list[Img] = []
         if magnitude >= 0:
             assert self.count() > magnitude
@@ -49,7 +51,8 @@ class Species:
 class WorkSpace:
     def __init__(self, _path: str | None, _magnitude: int):
         self.__idx: int = -1 if _path is None else 0
-        self.path = Path(_path)
+        self.path = Path()
+        self.path.set_path(_path)
         self.species: Species | None = None
         self.magnitude = _magnitude
 

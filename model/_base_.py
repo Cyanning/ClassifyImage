@@ -1,7 +1,6 @@
 class Path:
-    def __init__(self, _path: str | None):
+    def __init__(self):
         self.chunks: list[str] = []
-        self.total = _path
 
     def __getitem__(self, item):
         if isinstance(item, int):
@@ -47,7 +46,10 @@ class Path:
     def total(self) -> str:
         return "/".join(self.chunks)
 
-    @total.setter
-    def total(self, _path: str | None):
-        if _path is not None:
+    def set_path(self, _path: str = None):
+        if _path is None:
+            self.chunks.clear()
+        elif isinstance(_path, str):
             self.chunks = _path.replace("\\", "/").split("/")
+        else:
+            raise ValueError

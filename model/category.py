@@ -8,7 +8,8 @@ class Category:
     ]
 
     def __init__(self, _path: str | None):
-        self.path = Path(_path)
+        self.path = Path()
+        self.path.set_path(_path)
 
     def get_path(self, species_name: str, category_name: str) -> str:
         if category_name not in self.category:
