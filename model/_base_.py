@@ -1,6 +1,17 @@
+import sys
+
+
 class Path:
-    def __init__(self):
+    def __init__(self, symbol: str = None):
         self.chunks: list[str] = []
+        if symbol is not None:
+            self.symbol = symbol
+        else:
+            match sys.platform:
+                case "win32":
+                    self.symbol = "\\"
+                case _:
+                    self.symbol = "/"
 
     def __getitem__(self, item):
         if isinstance(item, int):
@@ -36,7 +47,7 @@ class Path:
                 yield lev, chunk
                 chunk = ""
                 lev += 1
-            chunk += "/"
+            chunk += self.symbol
 
     @property
     def name(self) -> str:
@@ -44,7 +55,18 @@ class Path:
 
     @property
     def total(self) -> str:
-        return "/".join(self.chunks)
+        return self.symbol.join(self.chunks)
+
+    def total_add(self, *filenames: str):
+        return self.total + self.symbol + self.symbol.join(filenames)
+
+    def total_insert(self, filename: str, index: int):
+        path = ""
+        for i, _path in self.generate_chunk():
+            if i == index:
+                path += filename + self.symbol
+            else:
+                path += _path
 
     def set_path(self, _path: str = None):
         if _path is None:

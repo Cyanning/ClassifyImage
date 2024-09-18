@@ -12,13 +12,13 @@ class Img:
         self.path.set_path(_path)
 
     def copy_to(self, _path: str):
-        shutil.copyfile(self.path.total, f"{_path}/{self.path.name}")
+        shutil.copyfile(self.path.total, _path + self.path.symbol + self.path.name)
 
     def trash(self):
-        filepath = self.path[0] + "/trash" + self.path[2:]
+        filepath = self.path[:1] + self.path.symbol + "trash" + self.path[3:]
         if not os.path.exists(filepath):
             os.makedirs(filepath)
-        shutil.move(self.path.total, filepath + "/" + self.path.name)
+        shutil.move(self.path.total, filepath)
 
 
 class Species:
@@ -37,7 +37,7 @@ class Species:
         for dirpath, dirnames, filenames in os.walk(self.path.total):
             for filename in filenames:
                 if any(filename.endswith(endcode) for endcode in IMG_FORMATS):
-                    self.imgs.append(Img(f"{dirpath}/{filename}"))
+                    self.imgs.append(Img(dirpath + self.path.symbol + filename))
 
     def count(self):
         count = 0

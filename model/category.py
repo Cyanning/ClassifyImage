@@ -14,7 +14,7 @@ class Category:
     def get_path(self, species_name: str, category_name: str) -> str:
         if category_name not in self.category:
             raise KeyError
-        path = "{}/{}/{}".format(self.path.total, species_name, category_name)
+        path = self.path.total_add(species_name, category_name)
         if not os.path.exists(path):
             os.makedirs(path)
         return path
