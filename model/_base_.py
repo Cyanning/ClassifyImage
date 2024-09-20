@@ -13,41 +13,15 @@ class Path:
                 case _:
                     self.symbol = "/"
 
-    def __getitem__(self, item):
+    def __getitem__(self, item) -> str:
         if isinstance(item, int):
-            for i, path in self.generate_chunk():
-                if i == item:
-                    return path
+            return self.total_slices[item].strip(self.symbol)
         elif isinstance(item, slice):
-            if item.start is not None and item.start < 0:
-                raise IndexError
-            if item.stop is not None and item.stop < 0:
-                raise IndexError
-            if item.step is not None:
-                raise IndexError
-
-            path = ""
-            for i, _path in self.generate_chunk():
-                if item.start is not None and item.start > i:
-                    continue
-                elif item.stop is None or item.stop > i:
-                    path += _path
-                else:
-                    break
-            return path
+            _pathes = self.total_slices[item]
+            _path = "".join(_pathes)
+            return _path
         else:
             raise IndexError
-
-    def generate_chunk(self):
-        lev = 0
-        chunk = ""
-        for strings in self.chunks:
-            chunk += strings
-            if len(strings) > 0:
-                yield lev, chunk
-                chunk = ""
-                lev += 1
-            chunk += self.symbol
 
     @property
     def name(self) -> str:
@@ -57,16 +31,29 @@ class Path:
     def total(self) -> str:
         return self.symbol.join(self.chunks)
 
-    def total_add(self, *filenames: str):
+    @property
+    def total_slices(self) -> list[str]:
+        chunk = ""
+        slices = []
+        for strings in self.chunks:
+            chunk += strings
+            if len(strings) > 0:
+                slices.append(chunk)
+                chunk = ""
+            chunk += self.symbol
+        return slices
+
+    def total_add(self, *filenames: str) -> str:
         return self.total + self.symbol + self.symbol.join(filenames)
 
-    def total_insert(self, filename: str, index: int):
+    def total_insert(self, filename: str, index: int) -> str:
         path = ""
-        for i, _path in self.generate_chunk():
+        for i, _path in enumerate(self.total_slices):
             if i == index:
                 path += filename + self.symbol
             else:
                 path += _path
+        return path
 
     def set_path(self, _path: str = None):
         if _path is None:

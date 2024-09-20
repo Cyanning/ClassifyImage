@@ -15,7 +15,7 @@ class Img:
         shutil.copyfile(self.path.total, _path + self.path.symbol + self.path.name)
 
     def trash(self):
-        filepath = self.path[:1] + self.path.symbol + "trash" + self.path[3:]
+        filepath = self.path[:2] + self.path.symbol + "trash" + self.path[3:-1]
         if not os.path.exists(filepath):
             os.makedirs(filepath)
         shutil.move(self.path.total, filepath)
